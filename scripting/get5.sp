@@ -1256,7 +1256,7 @@ public void WriteBackup() {
 
   char path[PLATFORM_MAX_PATH];
   if (g_GameState == Get5State_Live) {
-    Format(path, sizeof(path), "get5_backup_match%s_map%s_round%d.cfg", g_MatchID,
+    Format(path, sizeof(path), "get5_backup_match%s_map%d_round%d.cfg", g_MatchID,
            GetMapStatsNumber(), GameRules_GetProp("m_totalRoundsPlayed"));
   } else {
     Format(path, sizeof(path), "get5_backup_match%s_map%s_prelive.cfg", g_MatchID);
