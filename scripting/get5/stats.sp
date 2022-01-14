@@ -33,7 +33,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
   int damageUncapped = damageAsIntCapped; // Only used for damage report in chat; not sent to forwards or events.
   bool isDecoy = false;
 
-  // Decoy also deals damage type 8, but we don't want that to count as utility damage, as the in-game scoreboard
+  // Decoy also deals damage type 64, but we don't want that to count as utility damage, as the in-game scoreboard
   // does not, so we filter it out.
   if (damagetype == 64) {
     char entityName[255];
