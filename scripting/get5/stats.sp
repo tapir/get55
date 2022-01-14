@@ -29,7 +29,8 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
   }
 
   int playerHealth = GetClientHealth(victim);
-  int damageAsInt = RoundToFloor(damage);
+  int damageAsIntCapped = RoundToFloor(damage);
+  int damageUncapped = damageAsIntCapped; // Only used for damage report in chat; not sent to forwards or events.
   bool isDecoy = false;
 
   // Decoy also deals damage type 8, but we don't want that to count as utility damage, as the in-game scoreboard
@@ -43,19 +44,23 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
 
   bool isUtilityDamage = !isDecoy && (damagetype == 64 || damagetype == 8);
 
-  if (playerHealth - damageAsInt < 0) {
-    damageAsInt = playerHealth; // Cap damage at what health player has left.
+  if (playerHealth - damageAsIntCapped < 0) {
+    damageAsIntCapped = playerHealth; // Cap damage at what health player has left.
   }
 
   bool helpful = HelpfulAttack(attacker, victim);
 
   if (helpful) {
-    g_DamageDone[attacker][victim] += damageAsInt;
+    if (g_DamagePrintExcessCvar.IntValue > 0) {
+      g_DamageDone[attacker][victim] += damageUncapped;
+    } else {
+      g_DamageDone[attacker][victim] += damageAsIntCapped;
+    }
     g_DamageDoneHits[attacker][victim]++;
 
-    AddToPlayerStat(attacker, STAT_DAMAGE, damageAsInt);
+    AddToPlayerStat(attacker, STAT_DAMAGE, damageAsIntCapped);
     if (isUtilityDamage) {
-      AddToPlayerStat(attacker, STAT_UTILITY_DAMAGE, damageAsInt);
+      AddToPlayerStat(attacker, STAT_UTILITY_DAMAGE, damageAsIntCapped);
     }
   }
 
@@ -74,7 +79,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
        grenadeObject.Victims.PushObject(new Get5DamageGrenadeVictim(
          GetPlayerObject(victim),
          !helpful,
-         damageAsInt
+         damageAsIntCapped
        ));
     }
 
@@ -94,7 +99,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
         Get5DamageGrenadeVictim victimObject = view_as<Get5DamageGrenadeVictim>(molotovEvent.Victims.GetObject(i));
 
         if (potentiallyNewVictim.IsEqualToPlayer(victimObject.Player)) {
-          victimObject.Damage = victimObject.Damage + damageAsInt;
+          victimObject.Damage = victimObject.Damage + damageAsIntCapped;
           json_cleanup_and_delete(potentiallyNewVictim); // We don't need this object if user already was damaged.
           return Plugin_Continue;
         }
@@ -103,7 +108,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
       molotovEvent.Victims.PushObject(new Get5DamageGrenadeVictim(
         potentiallyNewVictim,
         !helpful,
-        damageAsInt
+        damageAsIntCapped
       ));
 
     }

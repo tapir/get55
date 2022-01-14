@@ -56,6 +56,7 @@ ConVar g_AutoReadyActivePlayersCvar;
 ConVar g_BackupSystemEnabledCvar;
 ConVar g_CheckAuthsCvar;
 ConVar g_DamagePrintCvar;
+ConVar g_DamagePrintExcessCvar;
 ConVar g_DamagePrintFormatCvar;
 ConVar g_DemoNameFormatCvar;
 ConVar g_DisplayGotvVetoCvar;
@@ -301,6 +302,9 @@ public void OnPluginStart() {
       "get5_damageprint_format",
       "- [{KILL_TO}] ({DMG_TO} in {HITS_TO}) to [{KILL_FROM}] ({DMG_FROM} in {HITS_FROM}) from {NAME} ({HEALTH} HP)",
       "Format of the damage output string. Available tags are in the default, color tags such as {LIGHT_RED} and {GREEN} also work. {KILL_TO} and {KILL_FROM} indicate kills, assists and flash assists as booleans, all of which are mutually exclusive.");
+  g_DamagePrintExcessCvar = CreateConVar(
+      "get5_damageprint_excess", "0", "Prints full damage given in the damage report on round end. With this disabled (default), a player cannot take more than 100 damage."
+    );
   g_CheckAuthsCvar =
       CreateConVar("get5_check_auths", "1",
                    "If set to 0, get5 will not force players to the correct team based on steamid");
