@@ -303,7 +303,7 @@ public void OnPluginStart() {
       "- [{KILL_TO}] ({DMG_TO} in {HITS_TO}) to [{KILL_FROM}] ({DMG_FROM} in {HITS_FROM}) from {NAME} ({HEALTH} HP)",
       "Format of the damage output string. Available tags are in the default, color tags such as {LIGHT_RED} and {GREEN} also work. {KILL_TO} and {KILL_FROM} indicate kills, assists and flash assists as booleans, all of which are mutually exclusive.");
   g_DamagePrintExcessCvar = CreateConVar(
-      "get5_damageprint_excess", "0", "Prints full damage given in the damage report on round end. With this disabled (default), a player cannot take more than 100 damage."
+      "get5_print_damage_excess", "0", "Prints full damage given in the damage report on round end. With this disabled (default), a player cannot take more than 100 damage."
     );
   g_CheckAuthsCvar =
       CreateConVar("get5_check_auths", "1",
