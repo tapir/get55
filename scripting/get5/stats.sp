@@ -32,6 +32,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
   int damageAsIntCapped = RoundToFloor(damage);
   int damageUncapped = damageAsIntCapped; // Only used for damage report in chat; not sent to forwards or events.
   bool isDecoy = false;
+  bool victimKilled = false;
 
   // Decoy also deals damage type 64, but we don't want that to count as utility damage, as the in-game scoreboard
   // does not, so we filter it out.
@@ -44,8 +45,9 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
 
   bool isUtilityDamage = !isDecoy && (damagetype == 64 || damagetype == 8);
 
-  if (playerHealth - damageAsIntCapped < 0) {
+  if (playerHealth - damageAsIntCapped <= 0) {
     damageAsIntCapped = playerHealth; // Cap damage at what health player has left.
+    victimKilled = true;
   }
 
   bool helpful = HelpfulAttack(attacker, victim);
@@ -79,6 +81,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
        grenadeObject.Victims.PushObject(new Get5DamageGrenadeVictim(
          GetPlayerObject(victim),
          !helpful,
+         victimKilled,
          damageAsIntCapped
        ));
     }
@@ -100,6 +103,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
 
         if (potentiallyNewVictim.IsEqualToPlayer(victimObject.Player)) {
           victimObject.Damage = victimObject.Damage + damageAsIntCapped;
+          victimObject.KilledVictim = victimKilled;
           json_cleanup_and_delete(potentiallyNewVictim); // We don't need this object if user already was damaged.
           return Plugin_Continue;
         }
@@ -108,6 +112,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
       molotovEvent.Victims.PushObject(new Get5DamageGrenadeVictim(
         potentiallyNewVictim,
         !helpful,
+        victimKilled,
         damageAsIntCapped
       ));
 
