@@ -646,16 +646,13 @@ public Action Stats_GrenadeThrownEvent(Event event, const char[] name, bool dont
   char weapon[32];
   event.GetString("weapon", weapon, sizeof(weapon));
 
-  char translatedWeapon[32];
-  CS_GetTranslatedWeaponAlias(weapon, translatedWeapon, sizeof(translatedWeapon));
-
   Get5GrenadeThrownEvent grenadeEvent = new Get5GrenadeThrownEvent(
     g_MatchID,
     Get5_GetMapNumber(),
     g_RoundNumber,
     GetRoundTime(),
     GetPlayerObject(attacker),
-    CS_AliasToWeaponID(translatedWeapon),
+    CS_AliasToWeaponID(weapon),
     weapon
   );
 
@@ -730,9 +727,7 @@ public Action Stats_PlayerDeathEvent(Event event, const char[] name, bool dontBr
   // knife - is not prefixed with "knife" for whatever reason, so searching weapon name strings
   // is unsafe.
 
-  char translatedWeapon[32];
-  CS_GetTranslatedWeaponAlias(weapon, translatedWeapon, sizeof(translatedWeapon));
-  CSWeaponID weaponId = CS_AliasToWeaponID(translatedWeapon);
+  CSWeaponID weaponId = CS_AliasToWeaponID(weapon);
 
   if (!validAttacker || attacker == victim) {
     isSuicide = true;
