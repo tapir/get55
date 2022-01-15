@@ -710,7 +710,7 @@ public Action Stats_PlayerDeathEvent(Event event, const char[] name, bool dontBr
   char weapon[32];
   event.GetString("weapon", weapon, sizeof(weapon));
 
-  int attackerTeam = GetClientTeam(attacker);
+  int attackerTeam = 0; // 0 until we know attacker is valid.
   int victimTeam = GetClientTeam(victim);
   bool isSuicide = false;
 
@@ -723,16 +723,13 @@ public Action Stats_PlayerDeathEvent(Event event, const char[] name, bool dontBr
     IncrementPlayerStat(victim, (victimTeam == CS_TEAM_CT) ? STAT_FIRSTDEATH_CT : STAT_FIRSTDEATH_T);
   }
 
-  // We need the weapon ID to reliably translate to a knife. The regular "bayonet" - as the only
-  // knife - is not prefixed with "knife" for whatever reason, so searching weapon name strings
-  // is unsafe.
-
   CSWeaponID weaponId = CS_AliasToWeaponID(weapon);
 
   if (!validAttacker || attacker == victim) {
     isSuicide = true;
   } else {
-    if (HelpfulAttack(attacker, victim)) {
+    attackerTeam = GetClientTeam(attacker);
+    if (attackerTeam != victimTeam) {
       if (!g_TeamFirstKillDone[attackerTeam]) {
         g_TeamFirstKillDone[attackerTeam] = true;
         IncrementPlayerStat(attacker, (attackerTeam == CS_TEAM_CT) ? STAT_FIRSTKILL_CT : STAT_FIRSTKILL_T);
