@@ -100,6 +100,9 @@ ConVar g_CoachingEnabledCvar;
 int g_MapsToWin = 1;  // Maps needed to win the series.
 bool g_BO2Match = false;
 int g_RoundNumber = -1; // The round number, 0-indexed. -1 if the match is not live.
+// The active map number, used by stats. Required as the calculated round number changes immediately as a map ends, but
+// before the map changes to the next.
+int g_MapNumber = 0;
 char g_MatchID[MATCH_ID_LENGTH];
 ArrayList g_MapPoolList = null;
 ArrayList g_TeamAuths[MATCHTEAM_COUNT];
@@ -656,7 +659,7 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
 
     if (IsValidClient(client)) {
 
-      Get5PlayerSayEvent event = new Get5PlayerSayEvent(g_MatchID, Get5_GetMapNumber(), g_RoundNumber, GetRoundTime(), GetPlayerObject(client), command, sArgs);
+      Get5PlayerSayEvent event = new Get5PlayerSayEvent(g_MatchID, g_MapNumber, g_RoundNumber, GetRoundTime(), GetPlayerObject(client), command, sArgs);
 
       LogDebug("Calling Get5_OnPlayerSay()");
 
@@ -870,7 +873,7 @@ public Action Command_EndMatch(int client, int args) {
 
   Get5MapResultEvent mapResultEvent = new Get5MapResultEvent(
     g_MatchID,
-    Get5_GetMapNumber() - 1,
+    g_MapNumber,
     mapName,
     MatchTeam_TeamNone,
     team1score,
@@ -1075,7 +1078,7 @@ public Action Event_MatchOver(Event event, const char[] name, bool dontBroadcast
 
     Get5MapResultEvent mapResultEvent = new Get5MapResultEvent(
       g_MatchID,
-      Get5_GetMapNumber() - 1,
+      g_MapNumber,
       mapName,
       winningTeam,
       team1score,
@@ -1261,7 +1264,7 @@ public void WriteBackup() {
   char path[PLATFORM_MAX_PATH];
   if (g_GameState == Get5State_Live) {
     Format(path, sizeof(path), "get5_backup_match%s_map%d_round%d.cfg", g_MatchID,
-           GetMapStatsNumber(), GameRules_GetProp("m_totalRoundsPlayed"));
+           GetMapStatsNumber(), GetRoundsPlayed());
   } else {
     Format(path, sizeof(path), "get5_backup_match%s_map%s_prelive.cfg", g_MatchID);
   }
@@ -1278,15 +1281,24 @@ public void WriteBackup() {
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
   LogDebug("Event_RoundStart");
 
+  // We need this for events that fire after the map ends, such as grenades detonating (or someone dying in fire), to be
+  // correct. It's sort of an edge-case, but due to how Get5_GetMapNumber works, it will return +1 if called after a
+  // map has been decided, but before the game actually stops, which could lead to events having the wrong map number.
+  g_MapNumber = Get5_GetMapNumber();
+
+  // Always reset these on round start, regardless of game state.
+  // This ensures that the functions that rely on these don't get messed up.
+  g_RoundStartedTime = 0.0;
+  g_BombPlantedTime = 0.0;
+
   if (g_GameState == Get5State_Live) {
 
     // Just to make sure nothing carries over between rounds to mess with this, we clear out these on each round start.
-    // must be done *before* setting round number as this otherwise could send events for grenades from the previous round.
     Stats_ResetGrenadeContainers();
 
-    g_RoundNumber = GameRules_GetProp("m_totalRoundsPlayed");
+    g_RoundNumber = GetRoundsPlayed();
 
-    Get5RoundStartedEvent startEvent = new Get5RoundStartedEvent(g_MatchID, Get5_GetMapNumber(), g_RoundNumber);
+    Get5RoundStartedEvent startEvent = new Get5RoundStartedEvent(g_MatchID, g_MapNumber, g_RoundNumber);
 
     LogDebug("Calling Get5_OnRoundStart()");
 
@@ -1297,14 +1309,8 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
     EventLogger_LogAndDeleteEvent(startEvent);
 
   } else {
-    LogDebug("Setting g_RoundNumber to -1 as started round was not live.");
-    g_RoundNumber = -1;
+    g_RoundNumber = -1; // Round number always -1 if not yet live.
   }
-
-  // Always reset these on round start, regardless of game state.
-  // This ensures that the functions that rely on these don't get messed up.
-  g_RoundStartedTime = 0.0;
-  g_BombPlantedTime = 0.0;
 
 }
 
@@ -1371,7 +1377,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 
     EventLogger_LogAndDeleteEvent(statsEvent);
 
-    int roundsPlayed = GameRules_GetProp("m_totalRoundsPlayed");
+    int roundsPlayed = GetRoundsPlayed();
     LogDebug("m_totalRoundsPlayed = %d", roundsPlayed);
 
     int roundsPerHalf = GetCvarIntSafe("mp_maxrounds") / 2;
@@ -1410,7 +1416,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
     // - which is why we subtract one.
     Get5RoundEndedEvent roundEndEvent = new Get5RoundEndedEvent(
       g_MatchID,
-      Get5_GetMapNumber(),
+      g_MapNumber,
       g_RoundNumber,
       GetRoundTime(),
       view_as<CSRoundEndReason>(event.GetInt("reason") - 1),

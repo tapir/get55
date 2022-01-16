@@ -393,7 +393,7 @@ public Action Stats_DecoyStartedEvent(Event event, const char[] name, bool dontB
 
   Get5DecoyStartedEvent decoyObject = new Get5DecoyStartedEvent(
     g_MatchID,
-    Get5_GetMapNumber(),
+    g_MapNumber,
     g_RoundNumber,
     GetRoundTime(),
     GetPlayerObject(attacker)
@@ -425,7 +425,7 @@ public Action Stats_SmokeGrenadeDetonateEvent(Event event, const char[] name, bo
 
   Get5SmokeDetonatedEvent smokeEvent = new Get5SmokeDetonatedEvent(
     g_MatchID,
-    Get5_GetMapNumber(),
+    g_MapNumber,
     g_RoundNumber,
     GetRoundTime(),
     GetPlayerObject(attacker),
@@ -459,7 +459,7 @@ public Action Stats_MolotovStartBurnEvent(Event event, const char[] name, bool d
   g_MolotovContainer.SetValue(molotovKey,
     new Get5MolotovDetonatedEvent(
       g_MatchID,
-      Get5_GetMapNumber(),
+      g_MapNumber,
       g_RoundNumber,
       GetRoundTime(),
       GetPlayerObject(g_LatestUserIdToDetonateMolotov) // set in molotov detonate event
@@ -541,7 +541,7 @@ public Action Stats_FlashbangDetonateEvent(Event event, const char[] name, bool 
 
   Get5FlashbangDetonatedEvent flashEvent = new Get5FlashbangDetonatedEvent(
     g_MatchID,
-    Get5_GetMapNumber(),
+    g_MapNumber,
     g_RoundNumber,
     GetRoundTime(),
     GetPlayerObject(attacker)
@@ -596,7 +596,7 @@ public Action Stats_HEGrenadeDetonateEvent(Event event, const char[] name, bool 
 
   Get5HEDetonatedEvent grenadeObject = new Get5HEDetonatedEvent(
     g_MatchID,
-    Get5_GetMapNumber(),
+    g_MapNumber,
     g_RoundNumber,
     GetRoundTime(),
     GetPlayerObject(attacker)
@@ -653,7 +653,7 @@ public Action Stats_GrenadeThrownEvent(Event event, const char[] name, bool dont
 
   Get5GrenadeThrownEvent grenadeEvent = new Get5GrenadeThrownEvent(
     g_MatchID,
-    Get5_GetMapNumber(),
+    g_MapNumber,
     g_RoundNumber,
     GetRoundTime(),
     GetPlayerObject(attacker),
@@ -768,7 +768,7 @@ public Action Stats_PlayerDeathEvent(Event event, const char[] name, bool dontBr
 
   Get5PlayerDeathEvent playerDeathEvent = new Get5PlayerDeathEvent(
     g_MatchID,
-    Get5_GetMapNumber(),
+    g_MapNumber,
     g_RoundNumber,
     GetRoundTime(),
     weaponId,
@@ -850,7 +850,7 @@ public Action Stats_BombPlantedEvent(Event event, const char[] name, bool dontBr
 
     Get5BombPlantedEvent bombEvent = new Get5BombPlantedEvent(
       g_MatchID,
-      Get5_GetMapNumber(),
+      g_MapNumber,
       g_RoundNumber,
       GetRoundTime(),
       GetPlayerObject(client),
@@ -887,7 +887,7 @@ public Action Stats_BombDefusedEvent(Event event, const char[] name, bool dontBr
 
     Get5BombDefusedEvent defuseEvent = new Get5BombDefusedEvent(
       g_MatchID,
-      Get5_GetMapNumber(),
+      g_MapNumber,
       g_RoundNumber,
       GetRoundTime(),
       GetPlayerObject(client),
@@ -915,7 +915,7 @@ public Action Stats_BombExplodedEvent(Event event, const char[] name, bool dontB
 
   Get5BombExplodedEvent bombExplodedEvent = new Get5BombExplodedEvent(
     g_MatchID,
-    Get5_GetMapNumber(),
+    g_MapNumber,
     g_RoundNumber,
     GetRoundTime(),
     event.GetInt("site")
@@ -990,7 +990,7 @@ public Action Stats_RoundMVPEvent(Event event, const char[] name, bool dontBroad
 
     Get5RoundMVPEvent mvpEvent = new Get5RoundMVPEvent(
       g_MatchID,
-      Get5_GetMapNumber(),
+      g_MapNumber,
       g_RoundNumber,
       GetPlayerObject(client),
       event.GetInt("reason")

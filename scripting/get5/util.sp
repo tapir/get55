@@ -753,3 +753,7 @@ public bool IsJSONPath(const char[] path) {
 public int GetMilliSecondsPassedSince(float timestamp) {
   return RoundToFloor((GetEngineTime() - timestamp) * 1000);
 }
+
+public int GetRoundsPlayed() {
+  return GameRules_GetProp("m_totalRoundsPlayed");
+}
