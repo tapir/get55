@@ -1183,21 +1183,21 @@ methodmap Get5DamageGrenadeVictim < Get5GrenadeVictim {
         }
     }
 
-    property bool KilledVictim {
+    property bool Killed {
         public get() {
-          return this.GetBool("killed_victim");
+          return this.GetBool("killed");
         }
 
         public set(bool killed) {
-          this.SetBool("killed_victim", killed);
+          this.SetBool("killed", killed);
         }
     }
 
-    public Get5DamageGrenadeVictim(const Get5Player player, const bool friendlyFire, bool killedVictim, const int damage) {
+    public Get5DamageGrenadeVictim(const Get5Player player, const bool friendlyFire, bool killed, const int damage) {
         Get5DamageGrenadeVictim self = view_as<Get5DamageGrenadeVictim>(new JSON_Object());
         self.Player = player
         self.FriendlyFire = friendlyFire;
-        self.KilledVictim = killedVictim;
+        self.Killed = killed;
         self.Damage = damage;
         return self;
     }

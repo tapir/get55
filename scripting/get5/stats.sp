@@ -103,7 +103,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
 
         if (potentiallyNewVictim.IsEqualToPlayer(victimObject.Player)) {
           victimObject.Damage = victimObject.Damage + damageAsIntCapped;
-          victimObject.KilledVictim = victimKilled;
+          victimObject.Killed = victimKilled;
           json_cleanup_and_delete(potentiallyNewVictim); // We don't need this object if user already was damaged.
           return Plugin_Continue;
         }
