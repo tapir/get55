@@ -152,6 +152,9 @@ static void AddInterestingCvars(File f) {
   WriteCvarString(f, "get5_mysql_force_matchid");
   WriteCvarString(f, "get5_pause_on_veto");
   WriteCvarString(f, "get5_pausing_enabled");
+  WriteCvarString(f, "get5_print_damage");
+  WriteCvarString(f, "get5_print_damage_excess");
+  WriteCvarString(f, "get5_damageprint_format");
   WriteCvarString(f, "get5_reset_pauses_each_half");
   WriteCvarString(f, "get5_web_api_url");
   WriteCvarString(f, "mp_freezetime");
