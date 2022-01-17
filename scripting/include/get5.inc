@@ -1038,6 +1038,29 @@ methodmap Get5VictimGrenadeEvent < Get5PlayerWeaponEvent {
     }
 }
 
+methodmap Get5VictimWithDamageGrenadeEvent < Get5VictimGrenadeEvent {
+
+    property int DamageEnemies {
+        public get() {
+          return this.GetInt("damage_enemies");
+        }
+
+        public set(int damage) {
+          this.SetInt("damage_enemies", damage);
+        }
+    }
+
+    property int DamageFriendlies {
+        public get() {
+          return this.GetInt("damage_friendlies");
+        }
+
+        public set(int damage) {
+          this.SetInt("damage_friendlies", damage);
+        }
+    }
+}                                                                                                                                                                                                                                                       
+
 methodmap Get5SmokeDetonatedEvent < Get5PlayerWeaponEvent {
 
     property bool ExtinguishedMolotov {
@@ -1065,7 +1088,7 @@ methodmap Get5SmokeDetonatedEvent < Get5PlayerWeaponEvent {
     }
 }
 
-methodmap Get5HEDetonatedEvent < Get5VictimGrenadeEvent {
+methodmap Get5HEDetonatedEvent < Get5VictimWithDamageGrenadeEvent {
 
     public Get5HEDetonatedEvent(const char[] matchId, const int mapNumber, const int roundNumber, const int roundTime, const Get5Player player) {
         Get5HEDetonatedEvent self = view_as<Get5HEDetonatedEvent>(new JSON_Object());
@@ -1078,6 +1101,8 @@ methodmap Get5HEDetonatedEvent < Get5VictimGrenadeEvent {
         self.WeaponId = CSWeapon_HEGRENADE;
         self.SetWeapon("hegrenade");
         self.Victims = new JSON_Array();
+        self.DamageEnemies = 0;
+        self.DamageFriendlies = 0;
         return self;
     }
 }
@@ -1117,7 +1142,7 @@ methodmap Get5DecoyStartedEvent < Get5PlayerWeaponEvent {
 
 // This event fires when the molotov ends, but its RoundTime parameter is when it started burning.
 // Note that this event does *not* fire if the molotov was thrown directly at a smoke and did not start burning.
-methodmap Get5MolotovDetonatedEvent < Get5VictimGrenadeEvent {
+methodmap Get5MolotovDetonatedEvent < Get5VictimWithDamageGrenadeEvent {
 
     // RoundTime is when the molotov detonated.
     property int EndTime {
@@ -1143,6 +1168,8 @@ methodmap Get5MolotovDetonatedEvent < Get5VictimGrenadeEvent {
         self.SetWeapon("molotov");
         self.Victims = new JSON_Array();
         self.EndTime = 0; // Set after the molotov stops burning (either by expiration, extinguish or new round start).
+        self.DamageEnemies = 0;
+        self.DamageFriendlies = 0;
         return self;
     }
 }

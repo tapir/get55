@@ -29,23 +29,22 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
   }
 
   int playerHealth = GetClientHealth(victim);
-  int damageAsIntCapped = RoundToFloor(damage);
-  int damageUncapped = damageAsIntCapped; // Only used for damage report in chat; not sent to forwards or events.
+  int damageUncapped = RoundToFloor(damage); // Only used for damage report in chat; not sent to forwards or events.
+  int damageAsIntCapped = damageUncapped; // Set to player health if >= that. See below.
   bool isDecoy = false;
   bool victimKilled = false;
 
   // Decoy also deals damage type 64, but we don't want that to count as utility damage, as the in-game scoreboard
   // does not, so we filter it out.
   if (damagetype == 64) {
-    char entityName[255];
-    GetEntityClassname(inflictor, entityName, 255);
-    LogDebug("Dmg type 64 entity class: %s", entityName);
+    char entityName[32];
+    GetEntityClassname(inflictor, entityName, sizeof(entityName));
     isDecoy = StrEqual(entityName, "decoy_projectile");
   }
 
   bool isUtilityDamage = !isDecoy && (damagetype == 64 || damagetype == 8);
 
-  if (playerHealth - damageAsIntCapped <= 0) {
+  if (playerHealth - damageUncapped <= 0) {
     damageAsIntCapped = playerHealth; // Cap damage at what health player has left.
     victimKilled = true;
   }
@@ -75,15 +74,21 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
     char grenadeKey[16];
     IntToString(inflictor, grenadeKey, sizeof(grenadeKey));
 
-    Get5VictimGrenadeEvent grenadeObject;
+    Get5VictimWithDamageGrenadeEvent grenadeObject;
     if (g_HEGrenadeContainer.GetValue(grenadeKey, grenadeObject)) {
 
-       grenadeObject.Victims.PushObject(new Get5DamageGrenadeVictim(
-         GetPlayerObject(victim),
-         !helpful,
-         victimKilled,
-         damageAsIntCapped
-       ));
+      if (helpful) {
+        grenadeObject.DamageEnemies = grenadeObject.DamageEnemies + damageAsIntCapped;
+      } else {
+        grenadeObject.DamageFriendlies = grenadeObject.DamageFriendlies + damageAsIntCapped;
+      }
+
+      grenadeObject.Victims.PushObject(new Get5DamageGrenadeVictim(
+        GetPlayerObject(victim),
+        !helpful,
+        victimKilled,
+        damageAsIntCapped
+      ));
     }
 
   } else if (damagetype == 8) {
@@ -91,15 +96,21 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
     char molotovKey[16];
     IntToString(inflictor, molotovKey, sizeof(molotovKey));
     
-    Get5VictimGrenadeEvent molotovEvent;
-    if (g_MolotovContainer.GetValue(molotovKey, molotovEvent)) {
+    Get5VictimWithDamageGrenadeEvent molotovObject;
+    if (g_MolotovContainer.GetValue(molotovKey, molotovObject)) {
+
+      if (helpful) {
+        molotovObject.DamageEnemies = molotovObject.DamageEnemies + damageAsIntCapped;
+      } else {
+        molotovObject.DamageFriendlies = molotovObject.DamageFriendlies + damageAsIntCapped;
+      }
 
       Get5Player potentiallyNewVictim = GetPlayerObject(victim);
 
-      int length = molotovEvent.Victims.Length;
+      int length = molotovObject.Victims.Length;
       for (int i = 0; i < length; i++) {
 
-        Get5DamageGrenadeVictim victimObject = view_as<Get5DamageGrenadeVictim>(molotovEvent.Victims.GetObject(i));
+        Get5DamageGrenadeVictim victimObject = view_as<Get5DamageGrenadeVictim>(molotovObject.Victims.GetObject(i));
 
         if (potentiallyNewVictim.IsEqualToPlayer(victimObject.Player)) {
           victimObject.Damage = victimObject.Damage + damageAsIntCapped;
@@ -109,7 +120,7 @@ public Action HandlePlayerDamage(int victim, int &attacker, int &inflictor, floa
         }
       }
 
-      molotovEvent.Victims.PushObject(new Get5DamageGrenadeVictim(
+      molotovObject.Victims.PushObject(new Get5DamageGrenadeVictim(
         potentiallyNewVictim,
         !helpful,
         victimKilled,
