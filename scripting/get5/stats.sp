@@ -215,7 +215,7 @@ public void CleanGrenadeContainer(const StringMap container) {
         event.Remove("victims");
         EmptyArrayList(victims);
       }
-      event.Remove(key);
+      container.Remove(key);
       delete event;
     }
   }
