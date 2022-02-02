@@ -334,7 +334,7 @@ methodmap Get5LoadMatchConfigFailedEvent < Get5Event {
 
   public Get5LoadMatchConfigFailedEvent(const char[] reason) {
     Get5LoadMatchConfigFailedEvent self = view_as<Get5LoadMatchConfigFailedEvent>(new JSON_Object());
-    self.SetEvent("map_picked");
+    self.SetEvent("match_config_load_fail");
     self.SetReason(reason);
     return self;
   }
