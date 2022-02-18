@@ -1266,7 +1266,8 @@ public void WriteBackup() {
     Format(path, sizeof(path), "get5_backup_match%s_map%d_round%d.cfg", g_MatchID,
            GetMapStatsNumber(), GetRoundsPlayed());
   } else {
-    Format(path, sizeof(path), "get5_backup_match%s_map%s_prelive.cfg", g_MatchID);
+    Format(path, sizeof(path), "get5_backup_match%s_map%d_prelive.cfg", g_MatchID,
+        GetMapStatsNumber());
   }
 
   LogDebug("created path %s", path);
