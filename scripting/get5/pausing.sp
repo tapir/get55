@@ -62,7 +62,7 @@ public Action Command_Pause(int client, int args) {
 
   if (client == 0) {
     g_InExtendedPause = true;
-    PauseGame(MatchTeam_TeamNone, PauseType_Tactical);
+    PauseGame(MatchTeam_TeamNone, PauseType_Tech);
     Get5_MessageToAll("%t", "AdminForcePauseInfoMessage");
     return Plugin_Handled;
   }
