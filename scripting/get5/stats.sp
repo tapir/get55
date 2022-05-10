@@ -201,7 +201,6 @@ public void Stats_ResetClientRoundValues(int client) {
 public void CleanGrenadeContainer(const StringMap container) {
 
   StringMapSnapshot snap = container.Snapshot();
-
   for (int i = 0; i < snap.Length; i++) {
 
     int keySize = snap.KeyBufferSize(i);
@@ -212,14 +211,19 @@ public void CleanGrenadeContainer(const StringMap container) {
     if (container.GetValue(key, event)) {
       ArrayList victims;
       if (event.GetValue("victims", victims)) {
+        LogDebug("Emptying victim array of length %d", victims.Length);
+        while (victims.Length > 0) {
+          Handle obj = victims.Get(0);
+          victims.Erase(0);
+          delete obj;
+        }
         event.Remove("victims");
-        EmptyArrayList(victims);
+        delete victims;
       }
       container.Remove(key);
       delete event;
     }
   }
-
   delete snap;
 
 }
@@ -457,6 +461,11 @@ public Action Stats_SmokeGrenadeDetonateEvent(Event event, const char[] name, bo
 
 public Action Stats_MolotovStartBurnEvent(Event event, const char[] name, bool dontBroadcast) {
   if (g_GameState != Get5State_Live) {
+    return Plugin_Continue;
+  }
+
+  if (g_LatestUserIdToDetonateMolotov == 0) {
+    // If user disconnected after throwing the molotov, this will be 0.
     return Plugin_Continue;
   }
 
