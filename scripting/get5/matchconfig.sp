@@ -24,6 +24,7 @@ stock bool LoadMatchConfig(const char[] config, bool restoreBackup = false) {
     g_TeamGivenStopCommand[team] = false;
     g_TeamPauseTimeUsed[team] = 0;
     g_TeamPausesUsed[team] = 0;
+    g_TeamCoaches[team] = "";
     ClearArray(GetTeamAuths(team));
   }
 
@@ -327,6 +328,7 @@ static void AddTeamBackupData(KeyValues kv, MatchTeam team) {
     kv.SetString("flag", g_TeamFlags[team]);
     kv.SetString("logo", g_TeamLogos[team]);
     kv.SetString("matchtext", g_TeamMatchTexts[team]);
+    kv.SetString("coach", g_TeamCoaches[team]);
   }
 }
 
@@ -566,12 +568,16 @@ static void LoadTeamDataJson(JSON_Object json, MatchTeam matchTeam) {
   if (StrEqual(fromfile, "")) {
     // TODO: this needs to support both an array and a dictionary
     // For now, it only supports an array
+    char tmpCoach[AUTH_LENGTH];
     AddJsonAuthsToList(json, "players", GetTeamAuths(matchTeam), AUTH_LENGTH);
     json_object_get_string_safe(json, "name", g_TeamNames[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "tag", g_TeamTags[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "flag", g_TeamFlags[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "logo", g_TeamLogos[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "matchtext", g_TeamMatchTexts[matchTeam], MAX_CVAR_LENGTH);
+    // Since we can have any steam auth come in, we need to convert this as well.
+    json_object_get_string_safe(json, "coach", tmpCoach, AUTH_LENGTH);
+    ConvertAuthToSteam64(tmpCoach, g_TeamCoaches[matchTeam]);
   } else {
     JSON_Object fromfileJson = json_load_file(fromfile);
     if (fromfileJson == null) {
@@ -594,12 +600,15 @@ static void LoadTeamData(KeyValues kv, MatchTeam matchTeam) {
   kv.GetString("fromfile", fromfile, sizeof(fromfile));
 
   if (StrEqual(fromfile, "")) {
+    char tmpCoach[AUTH_LENGTH];
     AddSubsectionAuthsToList(kv, "players", GetTeamAuths(matchTeam), AUTH_LENGTH);
     kv.GetString("name", g_TeamNames[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("tag", g_TeamTags[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("flag", g_TeamFlags[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("logo", g_TeamLogos[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("matchtext", g_TeamMatchTexts[matchTeam], MAX_CVAR_LENGTH, "");
+    kv.GetString("coach", tmpCoach, AUTH_LENGTH, "");
+    ConvertAuthToSteam64(tmpCoach, g_TeamCoaches[matchTeam]);
   } else {
     KeyValues fromfilekv = new KeyValues("team");
     if (fromfilekv.ImportFromFile(fromfile)) {

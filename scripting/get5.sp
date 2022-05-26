@@ -107,6 +107,7 @@ char g_FormattedTeamNames[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
 char g_TeamFlags[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
 char g_TeamLogos[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
 char g_TeamMatchTexts[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
+char g_TeamCoaches[MATCHTEAM_COUNT][64];
 char g_MatchTitle[MAX_CVAR_LENGTH];
 int g_FavoredTeamPercentage = 0;
 char g_FavoredTeamText[MAX_CVAR_LENGTH];
@@ -949,6 +950,8 @@ public bool RestoreLastRound() {
   g_LastGet5BackupCvar.GetString(lastBackup, sizeof(lastBackup));
   if (!StrEqual(lastBackup, "")) {
     ServerCommand("get5_loadbackup \"%s\"", lastBackup);
+    // Fix the last backup cvar since it gets reset.
+    g_LastGet5BackupCvar.SetString(lastBackup);
     return true;
   }
   return false;

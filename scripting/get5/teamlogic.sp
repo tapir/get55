@@ -63,7 +63,9 @@ public Action Command_JoinTeam(int client, const char[] command, int argc) {
   }
 
   if (csTeam == team_to) {
-    return Plugin_Continue;
+    if(CheckIfClientCoaching(client, correctTeam))
+      return Plugin_Stop;
+    else return Plugin_Continue;
   }
 
   if (csTeam != GetClientTeam(client)) {
@@ -82,11 +84,24 @@ public Action Command_JoinTeam(int client, const char[] command, int argc) {
       LogDebug("Forcing player %N onto %d", client, csTeam);
       FakeClientCommand(client, "jointeam %d", csTeam);
     }
-
+    
+    CheckIfClientCoaching(client, correctTeam);
     return Plugin_Stop;
   }
 
   return Plugin_Stop;
+}
+
+public bool CheckIfClientCoaching(int client, MatchTeam team) {
+    // Force user to join the coach if specified by config or reconnect.
+    char clientAuth64[AUTH_LENGTH];
+    GetAuth(client, clientAuth64, AUTH_LENGTH);
+    if (g_CoachingEnabledCvar.BoolValue && strcmp(clientAuth64, g_TeamCoaches[team]) == 0) {
+        LogDebug("Forcing player %N to coach as they were previously.", client);
+        MoveClientToCoach(client);
+        return true;
+    }
+    return false;
 }
 
 public void MoveClientToCoach(int client) {
@@ -111,7 +126,7 @@ public void MoveClientToCoach(int client) {
 
   char teamString[4];
   CSTeamString(csTeam, teamString, sizeof(teamString));
-
+  GetAuth(client, g_TeamCoaches[matchTeam], AUTH_LENGTH);
   // If we're in warmup we use the in-game
   // coaching command. Otherwise we manually move them to spec
   // and set the coaching target.
