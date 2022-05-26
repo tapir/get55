@@ -112,10 +112,11 @@ public void MoveClientToCoach(int client) {
   char teamString[4];
   CSTeamString(csTeam, teamString, sizeof(teamString));
 
-  // If we're in warmup or a freezetime we use the in-game
+  // If we're in warmup we use the in-game
   // coaching command. Otherwise we manually move them to spec
   // and set the coaching target.
-  if (!InWarmup() && !InFreezeTime()) {
+  // If in freeze time, we have to manually move as well.
+  if (!InWarmup() && InFreezeTime()) {
     // TODO: this needs to be tested more thoroughly,
     // it might need to be done in reverse order (?)
     LogDebug("Moving %L directly to coach slot", client);
