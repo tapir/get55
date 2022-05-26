@@ -63,9 +63,11 @@ public Action Command_JoinTeam(int client, const char[] command, int argc) {
   }
 
   if (csTeam == team_to) {
-    if(CheckIfClientCoaching(client, correctTeam))
+    if(CheckIfClientCoaching(client, correctTeam)) {
       return Plugin_Stop;
-    else return Plugin_Continue;
+    } else {
+      return Plugin_Continue;
+    }
   }
 
   if (csTeam != GetClientTeam(client)) {
@@ -76,9 +78,14 @@ public Action Command_JoinTeam(int client, const char[] command, int argc) {
       if (!g_CoachingEnabledCvar.BoolValue) {
         KickClient(client, "%t", "TeamIsFullInfoMessage");
       } else {
-        LogDebug("Forcing player %N to coach", client);
-        MoveClientToCoach(client);
-        Get5_Message(client, "%t", "MoveToCoachInfoMessage");
+        // Only attempt swapping if the coach slot is empty.
+        if (strcmp(g_TeamCoaches[correctTeam], "") == 0) {
+          LogDebug("Forcing player %N to coach", client);
+          MoveClientToCoach(client);
+          Get5_Message(client, "%t", "MoveToCoachInfoMessage");
+        } else {
+          KickClient(client, "%t", "TeamIsFullInfoMessage");
+        }
       }
     } else {
       LogDebug("Forcing player %N onto %d", client, csTeam);
