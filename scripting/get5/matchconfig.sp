@@ -826,6 +826,7 @@ public Action Command_AddCoach(int client, int args) {
   }
 
   char auth[AUTH_LENGTH];
+  char steam64[AUTH_LENGTH];
   char teamString[32];
   char name[MAX_NAME_LENGTH];
   if (args >= 2 && GetCmdArg(1, auth, sizeof(auth)) &&
@@ -848,14 +849,16 @@ public Action Command_AddCoach(int client, int args) {
       ReplyToCommand(client, "There is already a coach on that team.");
       return Plugin_Handled;
     }
+
+    ConvertAuthToSteam64(auth, steam64);
+
     if (AddPlayerToTeam(auth, team, name)) {
-      strcopy(g_TeamCoaches[team], AUTH_LENGTH, auth);
+      strcopy(g_TeamCoaches[team], AUTH_LENGTH, steam64);
       ReplyToCommand(client, "Successfully added player %s to coach team %s", auth, teamString);
     } else {
       ReplyToCommand(client, "Player %s is already on a match team, setting them as coach.", auth);
-      strcopy(g_TeamCoaches[team], AUTH_LENGTH, auth);
+      strcopy(g_TeamCoaches[team], AUTH_LENGTH, steam64);
     }
-
   } else {
     ReplyToCommand(client, "Usage: get5_addcoach <auth> <team1|team2> [name]");
   }
