@@ -816,6 +816,52 @@ public Action Command_AddPlayer(int client, int args) {
   return Plugin_Handled;
 }
 
+public Action Command_AddCoach(int client, int args) {
+  if (g_GameState == Get5State_None) {
+    ReplyToCommand(client, "Cannot change coach targets when there is no match to modify");
+    return Plugin_Handled;
+  } else if (!g_CoachingEnabledCvar.BoolValue) {
+    ReplyToCommand(client, "Cannot change coach targets if coaching is disabled.");
+    return Plugin_Handled;
+  }
+
+  char auth[AUTH_LENGTH];
+  char teamString[32];
+  char name[MAX_NAME_LENGTH];
+  if (args >= 2 && GetCmdArg(1, auth, sizeof(auth)) &&
+      GetCmdArg(2, teamString, sizeof(teamString))) {
+    if (args >= 3) {
+      GetCmdArg(3, name, sizeof(name));
+    }
+
+    MatchTeam team = MatchTeam_TeamNone;
+    if (StrEqual(teamString, "team1")) {
+      team = MatchTeam_Team1;
+    } else if (StrEqual(teamString, "team2")) {
+      team = MatchTeam_Team2;
+    } else {
+      ReplyToCommand(client, "Unknown team: must be one of team1 or team2");
+      return Plugin_Handled;
+    }
+
+    if (strcmp(g_TeamCoaches[team], "") != 0) {
+      ReplyToCommand(client, "There is already a coach on that team.");
+      return Plugin_Handled;
+    }
+    if (AddPlayerToTeam(auth, team, name)) {
+      strcopy(g_TeamCoaches[team], AUTH_LENGTH, auth);
+      ReplyToCommand(client, "Successfully added player %s to coach team %s", auth, teamString);
+    } else {
+      ReplyToCommand(client, "Player %s is already on a match team, setting them as coach.", auth);
+      strcopy(g_TeamCoaches[team], AUTH_LENGTH, auth);
+    }
+
+  } else {
+    ReplyToCommand(client, "Usage: get5_addcoach <auth> <team1|team2> [name]");
+  }
+  return Plugin_Handled;
+}
+
 public Action Command_AddKickedPlayer(int client, int args) {
   if (g_GameState == Get5State_None) {
     ReplyToCommand(client, "Cannot change player lists when there is no match to modify");

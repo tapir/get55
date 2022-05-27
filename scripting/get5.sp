@@ -406,6 +406,8 @@ public void OnPluginStart() {
   RegAdminCmd("get5_endmatch", Command_EndMatch, ADMFLAG_CHANGEMAP, "Force ends the current match");
   RegAdminCmd("get5_addplayer", Command_AddPlayer, ADMFLAG_CHANGEMAP,
               "Adds a steamid to a match team");
+  RegAdminCmd("get5_addcoach", Command_AddCoach, ADMFLAG_CHANGEMAP,
+              "Adds a steamid to a match teams coach slot");
   RegAdminCmd("get5_removeplayer", Command_RemovePlayer, ADMFLAG_CHANGEMAP,
               "Removes a steamid from a match team");
   RegAdminCmd("get5_addkickedplayer", Command_AddKickedPlayer, ADMFLAG_CHANGEMAP,
