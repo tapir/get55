@@ -14,12 +14,19 @@ public Action Command_JoinGame(int client, const char[] command, int argc) {
 
 public void CheckClientTeam(int client) {
   MatchTeam correctTeam = GetClientMatchTeam(client);
+  char auth[AUTH_LENGTH];
   int csTeam = MatchTeamToCSTeam(correctTeam);
   int currentTeam = GetClientTeam(client);
 
   if (csTeam != currentTeam) {
     if (IsClientCoaching(client)) {
       UpdateCoachTarget(client, csTeam);
+    } else if (GetAuth(client, auth, sizeof(auth))) {
+      char steam64[AUTH_LENGTH];
+      ConvertAuthToSteam64(auth, steam64);
+      if (strcmp(g_TeamCoaches[csTeam], steam64) == 0) {
+        UpdateCoachTarget(client, csTeam);
+      }
     }
 
     SwitchPlayerTeam(client, csTeam);
