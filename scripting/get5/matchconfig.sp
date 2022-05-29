@@ -328,7 +328,11 @@ static void AddTeamBackupData(KeyValues kv, MatchTeam team) {
     kv.SetString("flag", g_TeamFlags[team]);
     kv.SetString("logo", g_TeamLogos[team]);
     kv.SetString("matchtext", g_TeamMatchTexts[team]);
-    kv.SetString("coach", g_TeamCoaches[team]);
+    if (!StrEqual(g_TeamCoaches[team], "")) {
+      kv.JumpToKey("coach", true);
+      kv.SetString(g_TeamCoaches[team], KEYVALUE_STRING_PLACEHOLDER);
+      kv.GoBack();
+    }
   }
 }
 
@@ -607,8 +611,14 @@ static void LoadTeamData(KeyValues kv, MatchTeam matchTeam) {
     kv.GetString("flag", g_TeamFlags[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("logo", g_TeamLogos[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("matchtext", g_TeamMatchTexts[matchTeam], MAX_CVAR_LENGTH, "");
-    kv.GetString("coach", tmpCoach, AUTH_LENGTH, "");
-    ConvertAuthToSteam64(tmpCoach, g_TeamCoaches[matchTeam]);
+    if (kv.JumpToKey("coach")) {
+      if(kv.GotoFirstSubKey(false)) {
+        kv.GetSectionName(tmpCoach, AUTH_LENGTH);
+        ConvertAuthToSteam64(tmpCoach, g_TeamCoaches[matchTeam]);
+        kv.GoBack();
+      }
+      kv.GoBack();
+    }
   } else {
     KeyValues fromfilekv = new KeyValues("team");
     if (fromfilekv.ImportFromFile(fromfile)) {
@@ -845,7 +855,7 @@ public Action Command_AddCoach(int client, int args) {
       return Plugin_Handled;
     }
 
-    if (strcmp(g_TeamCoaches[team], "") != 0) {
+    if (!StrEqual(g_TeamCoaches[team], "")) {
       ReplyToCommand(client, "There is already a coach on that team.");
       return Plugin_Handled;
     }

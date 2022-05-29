@@ -24,7 +24,7 @@ public void CheckClientTeam(int client) {
     } else if (GetAuth(client, auth, sizeof(auth))) {
       char steam64[AUTH_LENGTH];
       ConvertAuthToSteam64(auth, steam64);
-      if (strcmp(g_TeamCoaches[csTeam], steam64) == 0) {
+      if (StrEqual(g_TeamCoaches[csTeam], steam64)) {
         UpdateCoachTarget(client, csTeam);
       }
     }
@@ -86,7 +86,7 @@ public Action Command_JoinTeam(int client, const char[] command, int argc) {
         KickClient(client, "%t", "TeamIsFullInfoMessage");
       } else {
         // Only attempt swapping if the coach slot is empty.
-        if (strcmp(g_TeamCoaches[correctTeam], "") == 0) {
+        if (StrEqual(g_TeamCoaches[correctTeam], "")) {
           LogDebug("Forcing player %N to coach", client);
           MoveClientToCoach(client);
           Get5_Message(client, "%t", "MoveToCoachInfoMessage");
@@ -160,6 +160,7 @@ public void MoveClientToCoach(int client) {
 }
 
 public Action Command_SmCoach(int client, int args) {
+  char auth[AUTH_LENGTH];
   if (g_GameState == Get5State_None) {
     return Plugin_Continue;
   }
@@ -168,11 +169,20 @@ public Action Command_SmCoach(int client, int args) {
     return Plugin_Handled;
   }
 
+  GetAuth(client, auth, sizeof(auth));
+  MatchTeam matchTeam = GetClientMatchTeam(client);
+  // Don't allow a new coach if one is already selected.
+  LogDebug("Attempting to get auth %s to coach when coach is %s", auth, g_TeamCoaches[matchTeam]);
+  if (!StrEqual(g_TeamCoaches[matchTeam], auth)) {
+    return Plugin_Stop;
+  }
+
   MoveClientToCoach(client);
   return Plugin_Handled;
 }
 
 public Action Command_Coach(int client, const char[] command, int argc) {
+
   if (g_GameState == Get5State_None) {
     return Plugin_Continue;
   }
