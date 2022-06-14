@@ -135,6 +135,7 @@ static void AddGlobalStateInfo(File f) {
     f.WriteLine("g_TeamStartingSide = %d", g_TeamStartingSide[team]);
     f.WriteLine("g_TeamPauseTimeUsed = %d", g_TeamPauseTimeUsed[team]);
     f.WriteLine("g_TeamPausesUsed = %d", g_TeamPausesUsed[team]);
+    f.WriteLine("g_TeamCoaches = %s", g_TeamCoaches[team]);
   }
 }
 

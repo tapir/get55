@@ -15,12 +15,19 @@ public Action Command_JoinGame(int client, const char[] command, int argc) {
 
 public void CheckClientTeam(int client) {
   MatchTeam correctTeam = GetClientMatchTeam(client);
+  char auth[AUTH_LENGTH];
   int csTeam = MatchTeamToCSTeam(correctTeam);
   int currentTeam = GetClientTeam(client);
 
   if (csTeam != currentTeam) {
     if (IsClientCoaching(client)) {
       UpdateCoachTarget(client, csTeam);
+    } else if (GetAuth(client, auth, sizeof(auth))) {
+      char steam64[AUTH_LENGTH];
+      ConvertAuthToSteam64(auth, steam64);
+      if (StrEqual(g_TeamCoaches[csTeam], steam64)) {
+        UpdateCoachTarget(client, csTeam);
+      }
     }
 
     SwitchPlayerTeam(client, csTeam);
@@ -64,7 +71,11 @@ public Action Command_JoinTeam(int client, const char[] command, int argc) {
   }
 
   if (csTeam == team_to) {
-    return Plugin_Continue;
+    if(CheckIfClientCoaching(client, correctTeam)) {
+      return Plugin_Stop;
+    } else {
+      return Plugin_Continue;
+    }
   }
 
   if (csTeam != GetClientTeam(client)) {
@@ -75,19 +86,37 @@ public Action Command_JoinTeam(int client, const char[] command, int argc) {
       if (!g_CoachingEnabledCvar.BoolValue) {
         KickClient(client, "%t", "TeamIsFullInfoMessage");
       } else {
-        LogDebug("Forcing player %N to coach", client);
-        MoveClientToCoach(client);
-        Get5_Message(client, "%t", "MoveToCoachInfoMessage");
+        // Only attempt swapping if the coach slot is empty.
+        if (StrEqual(g_TeamCoaches[correctTeam], "")) {
+          LogDebug("Forcing player %N to coach", client);
+          MoveClientToCoach(client);
+          Get5_Message(client, "%t", "MoveToCoachInfoMessage");
+        } else {
+          KickClient(client, "%t", "TeamIsFullInfoMessage");
+        }
       }
     } else {
       LogDebug("Forcing player %N onto %d", client, csTeam);
       FakeClientCommand(client, "jointeam %d", csTeam);
     }
-
+    
+    CheckIfClientCoaching(client, correctTeam);
     return Plugin_Stop;
   }
 
   return Plugin_Stop;
+}
+
+public bool CheckIfClientCoaching(int client, MatchTeam team) {
+    // Force user to join the coach if specified by config or reconnect.
+    char clientAuth64[AUTH_LENGTH];
+    GetAuth(client, clientAuth64, AUTH_LENGTH);
+    if (g_CoachingEnabledCvar.BoolValue && strcmp(clientAuth64, g_TeamCoaches[team]) == 0) {
+        LogDebug("Forcing player %N to coach as they were previously.", client);
+        MoveClientToCoach(client);
+        return true;
+    }
+    return false;
 }
 
 public void MoveClientToCoach(int client) {
@@ -112,11 +141,12 @@ public void MoveClientToCoach(int client) {
 
   char teamString[4];
   CSTeamString(csTeam, teamString, sizeof(teamString));
-
-  // If we're in warmup or a freezetime we use the in-game
+  GetAuth(client, g_TeamCoaches[matchTeam], AUTH_LENGTH);
+  // If we're in warmup we use the in-game
   // coaching command. Otherwise we manually move them to spec
   // and set the coaching target.
-  if (!InWarmup() && !InFreezeTime()) {
+  // If in freeze time, we have to manually move as well.
+  if (!InWarmup() && InFreezeTime()) {
     // TODO: this needs to be tested more thoroughly,
     // it might need to be done in reverse order (?)
     LogDebug("Moving %L directly to coach slot", client);
@@ -131,6 +161,7 @@ public void MoveClientToCoach(int client) {
 }
 
 public Action Command_SmCoach(int client, int args) {
+  char auth[AUTH_LENGTH];
   if (g_GameState == Get5State_None) {
     return Plugin_Continue;
   }
@@ -139,11 +170,20 @@ public Action Command_SmCoach(int client, int args) {
     return Plugin_Handled;
   }
 
+  GetAuth(client, auth, sizeof(auth));
+  MatchTeam matchTeam = GetClientMatchTeam(client);
+  // Don't allow a new coach if one is already selected.
+  LogDebug("Attempting to get auth %s to coach when coach is %s", auth, g_TeamCoaches[matchTeam]);
+  if (!StrEqual(g_TeamCoaches[matchTeam], auth)) {
+    return Plugin_Stop;
+  }
+
   MoveClientToCoach(client);
   return Plugin_Handled;
 }
 
 public Action Command_Coach(int client, const char[] command, int argc) {
+
   if (g_GameState == Get5State_None) {
     return Plugin_Continue;
   }

@@ -24,6 +24,7 @@ stock bool LoadMatchConfig(const char[] config, bool restoreBackup = false) {
     g_TeamGivenStopCommand[team] = false;
     g_TeamPauseTimeUsed[team] = 0;
     g_TeamPausesUsed[team] = 0;
+    g_TeamCoaches[team] = "";
     ClearArray(GetTeamAuths(team));
   }
 
@@ -343,6 +344,11 @@ static void AddTeamBackupData(KeyValues kv, MatchTeam team) {
     kv.SetString("flag", g_TeamFlags[team]);
     kv.SetString("logo", g_TeamLogos[team]);
     kv.SetString("matchtext", g_TeamMatchTexts[team]);
+    if (!StrEqual(g_TeamCoaches[team], "")) {
+      kv.JumpToKey("coach", true);
+      kv.SetString(g_TeamCoaches[team], KEYVALUE_STRING_PLACEHOLDER);
+      kv.GoBack();
+    }
   }
 }
 
@@ -582,12 +588,16 @@ static void LoadTeamDataJson(JSON_Object json, MatchTeam matchTeam) {
   if (StrEqual(fromfile, "")) {
     // TODO: this needs to support both an array and a dictionary
     // For now, it only supports an array
+    char tmpCoach[AUTH_LENGTH];
     AddJsonAuthsToList(json, "players", GetTeamAuths(matchTeam), AUTH_LENGTH);
     json_object_get_string_safe(json, "name", g_TeamNames[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "tag", g_TeamTags[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "flag", g_TeamFlags[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "logo", g_TeamLogos[matchTeam], MAX_CVAR_LENGTH);
     json_object_get_string_safe(json, "matchtext", g_TeamMatchTexts[matchTeam], MAX_CVAR_LENGTH);
+    // Since we can have any steam auth come in, we need to convert this as well.
+    json_object_get_string_safe(json, "coach", tmpCoach, AUTH_LENGTH);
+    ConvertAuthToSteam64(tmpCoach, g_TeamCoaches[matchTeam]);
   } else {
     JSON_Object fromfileJson = json_load_file(fromfile);
     if (fromfileJson == null) {
@@ -610,12 +620,21 @@ static void LoadTeamData(KeyValues kv, MatchTeam matchTeam) {
   kv.GetString("fromfile", fromfile, sizeof(fromfile));
 
   if (StrEqual(fromfile, "")) {
+    char tmpCoach[AUTH_LENGTH];
     AddSubsectionAuthsToList(kv, "players", GetTeamAuths(matchTeam), AUTH_LENGTH);
     kv.GetString("name", g_TeamNames[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("tag", g_TeamTags[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("flag", g_TeamFlags[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("logo", g_TeamLogos[matchTeam], MAX_CVAR_LENGTH, "");
     kv.GetString("matchtext", g_TeamMatchTexts[matchTeam], MAX_CVAR_LENGTH, "");
+    if (kv.JumpToKey("coach")) {
+      if(kv.GotoFirstSubKey(false)) {
+        kv.GetSectionName(tmpCoach, AUTH_LENGTH);
+        ConvertAuthToSteam64(tmpCoach, g_TeamCoaches[matchTeam]);
+        kv.GoBack();
+      }
+      kv.GoBack();
+    }
   } else {
     KeyValues fromfilekv = new KeyValues("team");
     if (fromfilekv.ImportFromFile(fromfile)) {
@@ -819,6 +838,55 @@ public Action Command_AddPlayer(int client, int args) {
 
   } else {
     ReplyToCommand(client, "Usage: get5_addplayer <auth> <team1|team2|spec> [name]");
+  }
+  return Plugin_Handled;
+}
+
+public Action Command_AddCoach(int client, int args) {
+  if (g_GameState == Get5State_None) {
+    ReplyToCommand(client, "Cannot change coach targets when there is no match to modify");
+    return Plugin_Handled;
+  } else if (!g_CoachingEnabledCvar.BoolValue) {
+    ReplyToCommand(client, "Cannot change coach targets if coaching is disabled.");
+    return Plugin_Handled;
+  }
+
+  char auth[AUTH_LENGTH];
+  char steam64[AUTH_LENGTH];
+  char teamString[32];
+  char name[MAX_NAME_LENGTH];
+  if (args >= 2 && GetCmdArg(1, auth, sizeof(auth)) &&
+      GetCmdArg(2, teamString, sizeof(teamString))) {
+    if (args >= 3) {
+      GetCmdArg(3, name, sizeof(name));
+    }
+
+    MatchTeam team = MatchTeam_TeamNone;
+    if (StrEqual(teamString, "team1")) {
+      team = MatchTeam_Team1;
+    } else if (StrEqual(teamString, "team2")) {
+      team = MatchTeam_Team2;
+    } else {
+      ReplyToCommand(client, "Unknown team: must be one of team1 or team2");
+      return Plugin_Handled;
+    }
+
+    if (!StrEqual(g_TeamCoaches[team], "")) {
+      ReplyToCommand(client, "There is already a coach on that team.");
+      return Plugin_Handled;
+    }
+
+    ConvertAuthToSteam64(auth, steam64);
+
+    if (AddPlayerToTeam(auth, team, name)) {
+      strcopy(g_TeamCoaches[team], AUTH_LENGTH, steam64);
+      ReplyToCommand(client, "Successfully added player %s to coach team %s", auth, teamString);
+    } else {
+      ReplyToCommand(client, "Player %s is already on a match team, setting them as coach.", auth);
+      strcopy(g_TeamCoaches[team], AUTH_LENGTH, steam64);
+    }
+  } else {
+    ReplyToCommand(client, "Usage: get5_addcoach <auth> <team1|team2> [name]");
   }
   return Plugin_Handled;
 }

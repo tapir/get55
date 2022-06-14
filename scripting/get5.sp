@@ -113,6 +113,7 @@ char g_FormattedTeamNames[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
 char g_TeamFlags[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
 char g_TeamLogos[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
 char g_TeamMatchTexts[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
+char g_TeamCoaches[MATCHTEAM_COUNT][64];
 char g_MatchTitle[MAX_CVAR_LENGTH];
 int g_FavoredTeamPercentage = 0;
 char g_FavoredTeamText[MAX_CVAR_LENGTH];
@@ -437,6 +438,8 @@ public void OnPluginStart() {
   RegAdminCmd("get5_endmatch", Command_EndMatch, ADMFLAG_CHANGEMAP, "Force ends the current match");
   RegAdminCmd("get5_addplayer", Command_AddPlayer, ADMFLAG_CHANGEMAP,
               "Adds a steamid to a match team");
+  RegAdminCmd("get5_addcoach", Command_AddCoach, ADMFLAG_CHANGEMAP,
+              "Adds a steamid to a match teams coach slot");
   RegAdminCmd("get5_removeplayer", Command_RemovePlayer, ADMFLAG_CHANGEMAP,
               "Removes a steamid from a match team");
   RegAdminCmd("get5_addkickedplayer", Command_AddKickedPlayer, ADMFLAG_CHANGEMAP,
@@ -1022,6 +1025,8 @@ public bool RestoreLastRound() {
   g_LastGet5BackupCvar.GetString(lastBackup, sizeof(lastBackup));
   if (!StrEqual(lastBackup, "")) {
     ServerCommand("get5_loadbackup \"%s\"", lastBackup);
+    // Fix the last backup cvar since it gets reset.
+    g_LastGet5BackupCvar.SetString(lastBackup);
     return true;
   }
   return false;
