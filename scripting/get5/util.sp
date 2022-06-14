@@ -4,7 +4,7 @@
 #define MAX_FLOAT_STRING_LENGTH 32
 #define AUTH_LENGTH 64
 
-// Dummy value for when we need to write a keyvalue string, but we don't care about he value.
+// Dummy value for when we need to write a keyvalue string, but we don't care about the value.
 // Trying to write an empty string often results in the keyvalue not being written, so we use this.
 #define KEYVALUE_STRING_PLACEHOLDER "__placeholder"
 
@@ -155,10 +155,17 @@ stock bool Record(const char[] demoName) {
 
 stock void StopRecording() {
   ServerCommand("tv_stoprecord");
-  LogDebug("Calling Get5_OnDemoFinished(file=%s)", g_DemoFileName);
+
+  Get5DemoFinishedEvent event = new Get5DemoFinishedEvent(g_MatchID, Get5_GetMapNumber(), g_DemoFileName);
+
+  LogDebug("Calling Get5_OnDemoFinished()");
+
   Call_StartForward(g_OnDemoFinished);
-  Call_PushString(g_DemoFileName);
+  Call_PushCell(event);
   Call_Finish();
+
+  EventLogger_LogAndDeleteEvent(event);
+
 }
 
 stock bool InWarmup() {
@@ -665,12 +672,8 @@ stock bool ConvertAuthToSteam64(const char[] inputId, char outputId[AUTH_LENGTH]
 }
 
 stock bool HelpfulAttack(int attacker, int victim) {
-  if (!IsValidClient(attacker) || !IsValidClient(victim)) {
-    return false;
-  }
-  int attackerTeam = GetClientTeam(attacker);
-  int victimTeam = GetClientTeam(victim);
-  return attackerTeam != victimTeam && attacker != victim;
+  // Assumes both attacker and victim are valid clients; check this before calling this function.
+  return attacker != victim && GetClientTeam(attacker) != GetClientTeam(victim);
 }
 
 stock SideChoice SideTypeFromString(const char[] input) {
@@ -735,4 +738,12 @@ public bool IsJSONPath(const char[] path) {
   } else {
     return false;
   }
+}
+
+public int GetMilliSecondsPassedSince(float timestamp) {
+  return RoundToFloor((GetEngineTime() - timestamp) * 1000);
+}
+
+public int GetRoundsPlayed() {
+  return GameRules_GetProp("m_totalRoundsPlayed");
 }
